@@ -256,23 +256,28 @@ extension AppDelegate: UINavigationControllerDelegate {
 
 extension AppDelegate {
     private func configureCrashReporter() {
-        let mainBundle = NSBundle.mainBundle()
-        let breakpad = BreakpadController.sharedInstance()
+        BreakpadController.sharedInstance().start(true)
 
+        // Add in custom crash-stats keys
+        if profile?.prefs.boolForKey("SendCrashReports") ?? false {
+            enableCrashReporting()
+        }
+    }
+
+
+    func enableCrashReporting() {
+        let breakpad = BreakpadController.sharedInstance()
         let addUploadParameterForKey: String -> Void = { key in
-            if let value = mainBundle.objectForInfoDictionaryKey(key) as? String {
+            if let value = NSBundle.mainBundle().objectForInfoDictionaryKey(key) as? String {
                 breakpad.addUploadParameter(value, forKey: key)
             }
         }
-        breakpad.start(true)
-        // Add in custom crash-stats keys
-        if let shouldUploadCrashes = mainBundle.objectForInfoDictionaryKey("BreakpadShouldUpload") as? NSString where shouldUploadCrashes.boolValue {
-            addUploadParameterForKey("AppID")
-            addUploadParameterForKey("BuildID")
-            addUploadParameterForKey("ReleaseChannel")
-            addUploadParameterForKey("Vendor")
-            breakpad.setUploadingEnabled(shouldUploadCrashes.boolValue)
-        }
+
+        addUploadParameterForKey("AppID")
+        addUploadParameterForKey("BuildID")
+        addUploadParameterForKey("ReleaseChannel")
+        addUploadParameterForKey("Vendor")
+        breakpad.setUploadingEnabled(true)
     }
 }
 
